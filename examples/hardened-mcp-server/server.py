@@ -10,7 +10,6 @@ Demonstrates:
 - Clear rejection of out-of-scope requests
 """
 
-import os
 import json
 from pathlib import Path
 
@@ -26,7 +25,7 @@ def validate_path(user_path: str) -> Path:
     try:
         candidate.relative_to(ALLOWED_ROOT)
     except ValueError:
-        raise PermissionError("Path outside allowed root")
+        raise PermissionError("Path outside allowed root") from None
 
     if not candidate.is_file():
         raise FileNotFoundError("Document not found")
