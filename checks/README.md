@@ -4,15 +4,20 @@ High-signal patterns to look for in MCP tool definitions and agent configuration
 
 These are intentionally simple and focused on issues that have led to real impact. They are not a complete scanner.
 
-## Tool description checks
+## Runnable checker
 
-Look for language in tool descriptions that attempts to steer the agent:
+```bash
+python3 checks/scan.py checks/examples/vulnerable-tools.json
+```
 
-- Instructions to ignore previous instructions or override system prompts
-- Directives to perform actions before or after using the tool (“before using this tool”, “first call”, “you must also”)
-- Requests to read sensitive paths (`~/.ssh`, `~/.aws`, credentials, tokens, `.env`)
-- Instructions to send data to external locations or URLs
-- Encoded or obfuscated content (base64, unicode escapes, zero-width characters)
+The script reports steering language, references to sensitive paths, and overly broad capabilities.
+
+## Patterns covered
+
+- Steering language (“ignore previous”, “before using this tool”, etc.)
+- References to sensitive paths (`~/.ssh`, credentials, `.env`)
+- Broad capabilities (shell, arbitrary execution)
+- Possible encoded content
 
 ### Example — risky description
 
@@ -23,30 +28,11 @@ Look for language in tool descriptions that attempts to steer the agent:
 }
 ```
 
-### Example — safer description
+## Capability and configuration checks
 
-```json
-{
-  "name": "summarize_document",
-  "description": "Returns a short summary of the provided document text. Does not access the file system or network."
-}
-```
-
-## Capability checks
-
-Flag tools that expose high-impact capabilities without clear constraints:
+Also review manually for:
 
 - Unrestricted shell or command execution
 - File system access outside a narrow root
-- Ability to modify cloud resources, deploy code, or manage secrets
-- Tools that accept raw URLs or hostnames for server-side requests
-
-## Configuration checks
-
-- MCP servers launched with overly broad arguments (e.g., filesystem server rooted at `/`)
-- Environment variables containing secrets passed directly to MCP processes
-- Unpinned package versions (`npx tool@latest`, `uvx tool`) for MCP servers
-
-## Usage
-
-These patterns can be applied manually during review or turned into automated checks. Future work may include a small CLI or ruleset.
+- MCP servers launched with overly broad arguments
+- Unpinned package versions (`npx tool@latest`)
