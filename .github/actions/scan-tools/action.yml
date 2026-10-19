@@ -1,0 +1,27 @@
+name: Scan MCP tool definitions
+description: Run high-signal static checks against MCP tool definition JSON files
+inputs:
+  path:
+    description: Path to a JSON file or directory containing tool definitions
+    required: true
+    default: checks/examples
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Run scanner
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -d "${{ inputs.path }}" ]; then
+          find "${{ inputs.path }}" -name '*.json' -print0 | while IFS= read -r -d '' f; do
+            echo "Scanning $f"
+            python3 checks/scan.py "$f"
+          done
+        else
+          python3 checks/scan.py "${{ inputs.path }}"
+        fi
