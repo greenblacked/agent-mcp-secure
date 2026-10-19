@@ -19,21 +19,25 @@ Existing tools are strong on red-teaming and generic guardrails. This repo aims 
 
 ## What this repository contains
 
-- **checks/** — Static checks for MCP tool definitions and agent configurations.
+- **checks/** — Static checks for MCP tool definitions (runnable scanner included).
 - **patterns/** — Practical control patterns (least privilege, human approval, output sanitization).
 - **detections/** — Detection content for agent abuse (queries and rules).
 - **examples/** — Hardened reference implementations.
 - **docs/** — Threat model and control rationale.
+- **worker/** — Cloudflare Worker demo endpoint for the checks.
 
 ## Quick start
 
-The project is early. Initial content focuses on:
+Run the static checks locally:
 
-1. Identifying high-risk patterns in MCP tool descriptions.
-2. Documenting least-privilege and approval patterns.
-3. Providing a minimal hardened example.
+```bash
+python3 checks/scan.py checks/examples/vulnerable-tools.json
+python3 checks/scan.py checks/examples/safe-tools.json
+```
 
-See the directories above and `docs/threat-model.md` for current scope.
+See `checks/README.md` and `examples/hardened-mcp-server/` for more.
+
+CI runs on every push and pull request to `main` and asserts that the vulnerable example produces findings while the safe example does not.
 
 ## Threat model (summary)
 
