@@ -19,13 +19,14 @@ Existing tools are strong on red-teaming and generic guardrails. This repo aims 
 
 ## What this repository contains
 
-- **checks/** — Python static checks for MCP tool definitions (runnable scanner included).
+- **checks/** — Python static checks for MCP tool definitions (scanner + unit tests).
 - **rust/** — Rust implementation of the same high-signal checks (library + CLI).
 - **patterns/** — Practical control patterns (least privilege, human approval, output sanitization, tool allow-list).
 - **detections/** — Detection content (Sigma rule + cloud audit query example).
 - **examples/** — Hardened reference MCP-style server.
 - **docs/** — Threat model and control rationale.
 - **worker/** — Cloudflare Worker demo endpoint for the checks.
+- **.github/actions/scan-tools** — Reusable composite action for CI.
 
 ## Quick start
 
@@ -34,6 +35,7 @@ Python:
 ```bash
 python3 checks/scan.py checks/examples/vulnerable-tools.json
 python3 checks/scan.py checks/examples/safe-tools.json
+cd checks && python3 -m unittest test_scan.py -v
 ```
 
 Rust:
@@ -56,7 +58,7 @@ curl -X POST https://<worker>.workers.dev/check \
 
 On every push and pull request to `main`:
 
-- **Python**: ruff lint + format check, functional assertions on vulnerable/safe examples, syntax check of the hardened server.
+- **Python**: ruff lint + format check, unit tests, functional assertions on vulnerable/safe examples, syntax check of the hardened server.
 - **Rust**: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`, release build.
 
 ## Threat model (summary)
