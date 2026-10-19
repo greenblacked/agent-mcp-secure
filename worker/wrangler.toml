@@ -1,0 +1,6 @@
+name = "agent-mcp-secure"
+main = "src/index.js"
+compatibility_date = "2024-10-01"
+
+[vars]
+# Optional: set via wrangler secret if needed
