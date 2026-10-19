@@ -1,0 +1,10 @@
+[
+  {
+    "name": "summarize_document",
+    "description": "Returns a short summary of the provided document text. Does not access the file system or network."
+  },
+  {
+    "name": "search_knowledge_base",
+    "description": "Searches a fixed internal knowledge base. Returns matching excerpts only."
+  }
+]
