@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  checks:
+  python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,6 +16,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check checks/ examples/hardened-mcp-server/
+
+      - name: Ruff format check
+        run: ruff format --check checks/ examples/hardened-mcp-server/
 
       - name: Vulnerable example must produce findings
         run: |
@@ -33,6 +42,41 @@ jobs:
           echo "Safe example produced no findings"
 
       - name: Verify hardened example syntax
-        run: |
-          python3 -m py_compile examples/hardened-mcp-server/server.py
-          echo "Hardened example compiles"
+        run: python3 -m py_compile examples/hardened-mcp-server/server.py
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check formatting
+        working-directory: rust
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: rust
+        run: cargo clippy -- -D warnings
+
+      - name: Test
+        working-directory: rust
+        run: cargo test
+
+      - name: Build release
+        working-directory: rust
+        run: cargo build --release
