@@ -26,6 +26,10 @@ jobs:
       - name: Ruff format check
         run: ruff format --check checks/ examples/hardened-mcp-server/
 
+      - name: Unit tests
+        working-directory: checks
+        run: python3 -m unittest test_scan.py -v
+
       - name: Vulnerable example must produce findings
         run: |
           output=$(python3 checks/scan.py checks/examples/vulnerable-tools.json)
