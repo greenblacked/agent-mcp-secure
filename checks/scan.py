@@ -44,9 +44,7 @@ def check_description(desc: str) -> list:
     lower = desc.lower()
     for pat in STEERING_PATTERNS:
         if re.search(pat, lower):
-            findings.append(
-                {"severity": "high", "type": "steering_language", "pattern": pat}
-            )
+            findings.append({"severity": "high", "type": "steering_language", "pattern": pat})
     for pat in SENSITIVE_PATHS:
         if re.search(pat, lower):
             findings.append(
@@ -58,9 +56,7 @@ def check_description(desc: str) -> list:
             )
     for pat in BROAD_CAPABILITIES:
         if re.search(pat, lower):
-            findings.append(
-                {"severity": "medium", "type": "broad_capability", "pattern": pat}
-            )
+            findings.append({"severity": "medium", "type": "broad_capability", "pattern": pat})
     # Simple obfuscation signal
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})
