@@ -19,7 +19,8 @@ Existing tools are strong on red-teaming and generic guardrails. This repo aims 
 
 ## What this repository contains
 
-- **checks/** — Static checks for MCP tool definitions (runnable scanner included).
+- **checks/** — Python static checks for MCP tool definitions (runnable scanner included).
+- **rust/** — Rust implementation of the same high-signal checks (library + CLI).
 - **patterns/** — Practical control patterns (least privilege, human approval, output sanitization).
 - **detections/** — Detection content for agent abuse (queries and rules).
 - **examples/** — Hardened reference implementations.
@@ -28,16 +29,27 @@ Existing tools are strong on red-teaming and generic guardrails. This repo aims 
 
 ## Quick start
 
-Run the static checks locally:
+Python:
 
 ```bash
 python3 checks/scan.py checks/examples/vulnerable-tools.json
 python3 checks/scan.py checks/examples/safe-tools.json
 ```
 
-See `checks/README.md` and `examples/hardened-mcp-server/` for more.
+Rust:
 
-CI runs on every push and pull request to `main` and asserts that the vulnerable example produces findings while the safe example does not.
+```bash
+cd rust
+cargo run -- ../checks/examples/vulnerable-tools.json
+cargo test
+```
+
+## CI
+
+On every push and pull request to `main`:
+
+- **Python**: ruff lint + format check, functional assertions on vulnerable/safe examples, syntax check of the hardened server.
+- **Rust**: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`, release build.
 
 ## Threat model (summary)
 
