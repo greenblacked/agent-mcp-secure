@@ -1,14 +1,18 @@
 # Detections
 
-Detection content for identifying potential agent or MCP abuse after the fact.
+Detection content for identifying potential agent or MCP abuse.
 
-## Planned content
+## Contents
 
-- Example queries for common log sources (application logs, MCP proxy logs, cloud audit logs)
-- Patterns indicating credential access following untrusted content processing
-- Unusual tool call sequences
-- Data leaving expected boundaries
+- `sigma/agent-credential-access.yml` — Sigma rule for credential path access after untrusted content processing (Linux process creation). Adapt log source to your environment.
+- `queries/cloud-audit-tool-abuse.sql` — Example BigQuery-style query for cloud audit logs showing secret access by principals that recently read objects.
 
-## Status
+## Usage notes
 
-Placeholder. High-quality, tested detection content will be added as the project matures.
+These are starting points. They require:
+
+- Logs that capture tool calls or process command lines
+- Mapping of agent/MCP principals
+- Tuning to reduce false positives in your environment
+
+Map findings back to the controls in `docs/controls.md` for remediation guidance.
