@@ -5,7 +5,7 @@ description = "Practical security controls for AI agents and MCP servers"
 requires-python = ">=3.10"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
