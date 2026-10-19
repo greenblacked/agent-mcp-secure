@@ -17,15 +17,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run static checks on example tools
+      - name: Vulnerable example must produce findings
         run: |
-          python3 checks/scan.py checks/examples/vulnerable-tools.json
-          # Expect findings; fail only on unexpected crash
-          echo "Scanner completed"
+          output=$(python3 checks/scan.py checks/examples/vulnerable-tools.json)
+          echo "$output"
+          echo "$output" | grep -q "steering_language" || (echo "Expected steering_language finding" && exit 1)
+          echo "$output" | grep -q "sensitive_path_reference" || (echo "Expected sensitive_path_reference finding" && exit 1)
+          echo "Vulnerable example produced expected findings"
+
+      - name: Safe example must produce no findings
+        run: |
+          output=$(python3 checks/scan.py checks/examples/safe-tools.json)
+          echo "$output"
+          echo "$output" | grep -q "No high-signal findings" || (echo "Expected clean result" && exit 1)
+          echo "Safe example produced no findings"
 
       - name: Verify hardened example syntax
         run: |
           python3 -m py_compile examples/hardened-mcp-server/server.py
           echo "Hardened example compiles"
-
-  # Optional future jobs: worker build, additional tests
