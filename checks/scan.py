@@ -38,13 +38,36 @@ BROAD_CAPABILITIES = [
     r"admin",
 ]
 
+UNPINNED_PACKAGES = [
+    r"npx\s+[^\s]+@latest",
+    r"uvx\s+[^\s]+(?:\s|$)",
+    r"docker\s+run\s+[^\s]+:latest",
+]
+
+OPEN_URL_PATTERNS = [
+    r"fetch any url",
+    r"call the provided endpoint",
+    r"request the given url",
+    r"arbitrary url",
+    r"webhook url",
+]
+
+BROAD_FS_ROOTS = [
+    r"rooted at /",
+    r"root.*\$home",
+    r"filesystem.*home",
+    r"access to the entire filesystem",
+]
+
 
 def check_description(desc: str) -> list:
     findings = []
     lower = desc.lower()
+
     for pat in STEERING_PATTERNS:
         if re.search(pat, lower):
             findings.append({"severity": "high", "type": "steering_language", "pattern": pat})
+
     for pat in SENSITIVE_PATHS:
         if re.search(pat, lower):
             findings.append(
@@ -54,12 +77,27 @@ def check_description(desc: str) -> list:
                     "pattern": pat,
                 }
             )
+
     for pat in BROAD_CAPABILITIES:
         if re.search(pat, lower):
             findings.append({"severity": "medium", "type": "broad_capability", "pattern": pat})
+
+    for pat in UNPINNED_PACKAGES:
+        if re.search(pat, lower):
+            findings.append({"severity": "medium", "type": "unpinned_package", "pattern": pat})
+
+    for pat in OPEN_URL_PATTERNS:
+        if re.search(pat, lower):
+            findings.append({"severity": "high", "type": "open_url_argument", "pattern": pat})
+
+    for pat in BROAD_FS_ROOTS:
+        if re.search(pat, lower):
+            findings.append({"severity": "medium", "type": "broad_filesystem_root", "pattern": pat})
+
     # Simple obfuscation signal
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})
+
     return findings
 
 
