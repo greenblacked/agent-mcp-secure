@@ -26,6 +26,14 @@ class TestLaunchConfig(unittest.TestCase):
         }
         self.assertEqual(check_launch(config), [])
 
+    def test_broad_root_variants(self):
+        for cmd in ["server --root /", "server --root=~/", "server --root $HOME", "npx server-filesystem@1.2.3 /"]:
+            types = {f["type"] for f in check_launch(cmd)}
+            self.assertIn("broad_filesystem_root", types, cmd)
+
+    def test_scoped_root_string(self):
+        self.assertEqual(check_launch("python3 server.py --root /data/documents"), [])
+
 
 if __name__ == "__main__":
     unittest.main()

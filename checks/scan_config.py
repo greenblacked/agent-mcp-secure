@@ -19,11 +19,11 @@ UNPINNED = [
     r"docker\s+run\s+[^\s]+:latest",
 ]
 
+# Matched against the flattened command line; a root must be the whole argument,
+# so "--root /data/documents" is not flagged.
 BROAD_ROOTS = [
-    r"--root\s+/",
-    r"--root\s+~/",
-    r"--root\s+\$HOME",
-    r"filesystem.*\s+/",
+    r"--root[\s=]+(?:/|~/?|\$home)(?:\s|$)",
+    r"filesystem\S*(?:\s+\S+)*\s+(?:/|~/?|\$home)(?:\s|$)",
 ]
 
 SENSITIVE_ENV = [
@@ -34,10 +34,20 @@ SENSITIVE_ENV = [
 ]
 
 
+def command_line(config: dict | str) -> str:
+    """Flatten a launch config into a single command line."""
+    if isinstance(config, str):
+        return config
+    args = config.get("args") or []
+    if not isinstance(args, list):
+        args = [args]
+    return " ".join(str(part) for part in [config.get("command", ""), *args])
+
+
 def check_launch(config: dict | str) -> list:
     findings = []
     text = config if isinstance(config, str) else json.dumps(config)
-    lower = text.lower()
+    lower = command_line(config).lower()
 
     for pat in UNPINNED:
         if re.search(pat, lower):
