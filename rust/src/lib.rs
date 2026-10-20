@@ -52,7 +52,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
     ];
 
     for pat in steering {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "high".into(),
                 type_: "steering_language".into(),
@@ -60,7 +63,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in sensitive {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "high".into(),
                 type_: "sensitive_path_reference".into(),
@@ -68,7 +74,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in broad {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "medium".into(),
                 type_: "broad_capability".into(),
@@ -76,7 +85,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in unpinned {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "medium".into(),
                 type_: "unpinned_package".into(),
@@ -84,7 +96,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in open_url {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "high".into(),
                 type_: "open_url_argument".into(),
@@ -92,7 +107,10 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in broad_fs {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+        if Regex::new(&format!(r"(?i){}", pat))
+            .unwrap()
+            .is_match(&lower)
+        {
             findings.push(Finding {
                 severity: "medium".into(),
                 type_: "broad_filesystem_root".into(),
