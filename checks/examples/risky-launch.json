@@ -1,0 +1,8 @@
+{
+  "command": "npx @org/mcp-filesystem@latest",
+  "args": ["--root", "/"],
+  "env": {
+    "AWS_SECRET_ACCESS_KEY": "example",
+    "NODE_ENV": "production"
+  }
+}
