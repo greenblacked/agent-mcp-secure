@@ -1,38 +1,33 @@
-# Additional Check Rules
+# Check Rules
 
-These rules extend the high-signal patterns already implemented in the scanners.
+## Implemented
 
-## Unpinned package launchers
+### Steering language
+Instructions that attempt to override prior context or force specific actions before/after tool use.
 
-Flag MCP server launch commands that use floating versions:
+### Sensitive path references
+Mentions of `~/.ssh`, credentials, `.env`, tokens, etc.
 
+### Broad capabilities
+Unrestricted shell, arbitrary command execution, admin-level access.
+
+### Unpinned package launchers
 - `npx @scope/tool@latest`
-- `uvx tool` (no version pin)
+- `uvx tool` (no version)
 - `docker run image:latest`
 
-**Why**: Supply-chain and reproducibility risk. Prefer pinned versions or digests.
+### Open URL / SSRF-style arguments
+Descriptions that accept or fetch arbitrary URLs or endpoints without an allow-list.
 
-## SSRF / open URL arguments
+### Broad filesystem roots
+Tools rooted at `/`, `$HOME`, or described as having full filesystem access.
 
-Flag tools whose schemas accept free-form URLs or hostnames that the server will request:
+### Possible encoded content
+Long base64-like strings in descriptions.
 
-- Parameter named `url`, `endpoint`, `host`, `webhook` without an allow-list
-- Description mentioning "fetch any URL" or "call the provided endpoint"
-
-**Why**: Enables server-side request forgery and data exfiltration via tool arguments.
-
-## Overly broad filesystem roots
-
-Flag configuration that roots a filesystem tool at `/`, `$HOME`, or the user profile.
-
-**Why**: Increases the impact of path-related injections.
-
-## Encoded or obfuscated descriptions
-
-Already partially covered. Also watch for:
+## Planned
 
 - High ratio of non-ASCII or zero-width characters
-- Nested base64
-- Instructions hidden in HTML comments or JSON string escapes
-
-These rules can be added to the Python and Rust scanners incrementally.
+- Nested encoding
+- Schema-level checks for free-form URL parameters
+- Configuration scanning for MCP launch arguments
