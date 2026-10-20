@@ -1,0 +1,2 @@
+# Dev and CI tooling. Pinned so a new upstream release cannot break CI unannounced.
+ruff==0.17.1
