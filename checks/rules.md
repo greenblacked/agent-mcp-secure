@@ -25,9 +25,12 @@ Tools rooted at `/`, `$HOME`, or described as having full filesystem access.
 ### Possible encoded content
 Long base64-like strings in descriptions.
 
+### Schema-level risky parameters
+Free-form string parameters named `url`, `endpoint`, `webhook`, `host`, `path`, `filepath` without an `enum` or `pattern` constraint.
+
 ## Planned
 
 - High ratio of non-ASCII or zero-width characters
 - Nested encoding
-- Schema-level checks for free-form URL parameters
 - Configuration scanning for MCP launch arguments
+- Argument validation helpers in the hardened example
