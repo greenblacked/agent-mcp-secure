@@ -39,6 +39,7 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
     ];
     let open_url = [
         r"fetch any url",
+        r"from any url",
         r"call the provided endpoint",
         r"request the given url",
         r"arbitrary url",
