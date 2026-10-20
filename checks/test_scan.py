@@ -35,6 +35,16 @@ class TestCheckDescription(unittest.TestCase):
         types = {f["type"] for f in findings}
         self.assertIn("broad_filesystem_root", types)
 
+    def test_zero_width(self):
+        findings = check_description("Normal text\u200bwith zero-width")
+        types = {f["type"] for f in findings}
+        self.assertIn("zero_width_characters", types)
+
+    def test_high_non_ascii(self):
+        findings = check_description("你好世界这是一个测试")
+        types = {f["type"] for f in findings}
+        self.assertIn("high_non_ascii_ratio", types)
+
     def test_clean(self):
         findings = check_description(
             "Returns a short summary of the provided text. Does not access the file system."
