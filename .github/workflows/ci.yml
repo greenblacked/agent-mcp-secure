@@ -28,7 +28,9 @@ jobs:
 
       - name: Unit tests
         working-directory: checks
-        run: python3 -m unittest test_scan.py -v
+        run: |
+          python3 -m unittest test_scan.py -v
+          python3 -m unittest test_scan_config.py -v
 
       - name: Vulnerable example must produce findings
         run: |
