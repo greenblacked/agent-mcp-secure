@@ -59,7 +59,8 @@ BROAD_FS_ROOTS = [
     r"access to the entire filesystem",
 ]
 
-# Schema parameter names that suggest open URL or path risk
+ZERO_WIDTH = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff]")
+
 RISKY_PARAM_NAMES = {
     "url",
     "endpoint",
@@ -108,6 +109,16 @@ def check_description(desc: str) -> list:
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})
 
+    # Zero-width characters (common obfuscation)
+    if ZERO_WIDTH.search(desc):
+        findings.append({"severity": "medium", "type": "zero_width_characters"})
+
+    # High ratio of non-ASCII (possible obfuscation or unexpected content)
+    if desc:
+        non_ascii = sum(1 for c in desc if ord(c) > 127)
+        if non_ascii / len(desc) > 0.3:
+            findings.append({"severity": "low", "type": "high_non_ascii_ratio"})
+
     return findings
 
 
@@ -127,16 +138,14 @@ def check_schema(schema: dict) -> list:
         if prop.get("type") != "string":
             continue
         lower_name = name.lower()
-        if lower_name in RISKY_PARAM_NAMES:
-            # No enum / pattern means unconstrained
-            if "enum" not in prop and "pattern" not in prop:
-                findings.append(
-                    {
-                        "severity": "medium",
-                        "type": "unconstrained_risky_parameter",
-                        "parameter": name,
-                    }
-                )
+        if lower_name in RISKY_PARAM_NAMES and "enum" not in prop and "pattern" not in prop:
+            findings.append(
+                {
+                    "severity": "medium",
+                    "type": "unconstrained_risky_parameter",
+                    "parameter": name,
+                }
+            )
     return findings
 
 
@@ -147,7 +156,6 @@ def scan_tools(tools: list) -> list:
         desc = tool.get("description", "")
         findings = check_description(desc)
 
-        # Optional input schema (JSON Schema style)
         schema = tool.get("inputSchema") or tool.get("input_schema") or {}
         findings.extend(check_schema(schema))
 
