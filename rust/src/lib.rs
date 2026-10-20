@@ -21,6 +21,7 @@ pub struct ToolResult {
 
 pub fn check_description(desc: &str) -> Vec<Finding> {
     let mut findings = Vec::new();
+    let lower = desc.to_lowercase();
 
     let steering = [
         r"ignore previous",
@@ -31,9 +32,27 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
     ];
     let sensitive = [r"~/.ssh", r"~/.aws", r"\.env", r"id_rsa", r"credentials"];
     let broad = [r"shell", r"execute command", r"run arbitrary"];
+    let unpinned = [
+        r"npx\s+[^\s]+@latest",
+        r"uvx\s+[^\s]+",
+        r"docker\s+run\s+[^\s]+:latest",
+    ];
+    let open_url = [
+        r"fetch any url",
+        r"call the provided endpoint",
+        r"request the given url",
+        r"arbitrary url",
+        r"webhook url",
+    ];
+    let broad_fs = [
+        r"rooted at /",
+        r"root.*\$home",
+        r"filesystem.*home",
+        r"access to the entire filesystem",
+    ];
 
     for pat in steering {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(desc) {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
             findings.push(Finding {
                 severity: "high".into(),
                 type_: "steering_language".into(),
@@ -41,7 +60,7 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in sensitive {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(desc) {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
             findings.push(Finding {
                 severity: "high".into(),
                 type_: "sensitive_path_reference".into(),
@@ -49,10 +68,34 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         }
     }
     for pat in broad {
-        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(desc) {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
             findings.push(Finding {
                 severity: "medium".into(),
                 type_: "broad_capability".into(),
+            });
+        }
+    }
+    for pat in unpinned {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+            findings.push(Finding {
+                severity: "medium".into(),
+                type_: "unpinned_package".into(),
+            });
+        }
+    }
+    for pat in open_url {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+            findings.push(Finding {
+                severity: "high".into(),
+                type_: "open_url_argument".into(),
+            });
+        }
+    }
+    for pat in broad_fs {
+        if Regex::new(&format!(r"(?i){}", pat)).unwrap().is_match(&lower) {
+            findings.push(Finding {
+                severity: "medium".into(),
+                type_: "broad_filesystem_root".into(),
             });
         }
     }
@@ -88,6 +131,18 @@ mod tests {
         assert!(findings
             .iter()
             .any(|f| f.type_ == "sensitive_path_reference"));
+    }
+
+    #[test]
+    fn detects_open_url() {
+        let findings = check_description("Fetches content from any URL provided by the user.");
+        assert!(findings.iter().any(|f| f.type_ == "open_url_argument"));
+    }
+
+    #[test]
+    fn detects_unpinned() {
+        let findings = check_description("Starts the helper via npx @org/mcp-tool@latest");
+        assert!(findings.iter().any(|f| f.type_ == "unpinned_package"));
     }
 
     #[test]
