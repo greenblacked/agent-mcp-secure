@@ -59,6 +59,17 @@ BROAD_FS_ROOTS = [
     r"access to the entire filesystem",
 ]
 
+# Schema parameter names that suggest open URL or path risk
+RISKY_PARAM_NAMES = {
+    "url",
+    "endpoint",
+    "webhook",
+    "host",
+    "path",
+    "filepath",
+    "file_path",
+}
+
 
 def check_description(desc: str) -> list:
     findings = []
@@ -94,10 +105,38 @@ def check_description(desc: str) -> list:
         if re.search(pat, lower):
             findings.append({"severity": "medium", "type": "broad_filesystem_root", "pattern": pat})
 
-    # Simple obfuscation signal
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})
 
+    return findings
+
+
+def check_schema(schema: dict) -> list:
+    """Look for free-form string parameters that commonly enable SSRF or path issues."""
+    findings = []
+    if not isinstance(schema, dict):
+        return findings
+
+    properties = schema.get("properties") or {}
+    if not isinstance(properties, dict):
+        return findings
+
+    for name, prop in properties.items():
+        if not isinstance(prop, dict):
+            continue
+        if prop.get("type") != "string":
+            continue
+        lower_name = name.lower()
+        if lower_name in RISKY_PARAM_NAMES:
+            # No enum / pattern means unconstrained
+            if "enum" not in prop and "pattern" not in prop:
+                findings.append(
+                    {
+                        "severity": "medium",
+                        "type": "unconstrained_risky_parameter",
+                        "parameter": name,
+                    }
+                )
     return findings
 
 
@@ -107,6 +146,11 @@ def scan_tools(tools: list) -> list:
         name = tool.get("name", "unknown")
         desc = tool.get("description", "")
         findings = check_description(desc)
+
+        # Optional input schema (JSON Schema style)
+        schema = tool.get("inputSchema") or tool.get("input_schema") or {}
+        findings.extend(check_schema(schema))
+
         if findings:
             results.append({"tool": name, "findings": findings})
     return results
