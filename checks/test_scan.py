@@ -46,9 +46,7 @@ class TestCheckDescription(unittest.TestCase):
         self.assertIn("high_non_ascii_ratio", types)
 
     def test_clean(self):
-        findings = check_description(
-            "Returns a short summary of the provided text. Does not access the file system."
-        )
+        findings = check_description("Returns a short summary of the provided text. Does not access the file system.")
         self.assertEqual(findings, [])
 
 

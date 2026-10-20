@@ -45,7 +45,7 @@ UNPINNED_PACKAGES = [
 ]
 
 OPEN_URL_PATTERNS = [
-    r"fetch any url",
+    r"fetch\w*\b[^.]{0,40}\bany\s+url",
     r"call the provided endpoint",
     r"request the given url",
     r"arbitrary url",
