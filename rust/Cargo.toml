@@ -2,6 +2,8 @@
 name = "agent-mcp-secure"
 version = "0.1.0"
 edition = "2021"
+# std::sync::LazyLock
+rust-version = "1.80"
 description = "Static checks for MCP tool definitions"
 license = "Apache-2.0"
 
