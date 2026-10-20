@@ -5,21 +5,27 @@ Minimal hardened MCP server example.
 Demonstrates:
 - Narrow tool purpose (document reader only)
 - Path restriction to an explicit root
-- Argument validation
+- Strict argument validation (length, character class, no traversal)
 - No shell interpolation
 - Clear rejection of out-of-scope requests
 """
 
 import json
+import re
 from pathlib import Path
 
 ALLOWED_ROOT = Path("/data/documents").resolve()
+MAX_PATH_LEN = 256
+ALLOWED_CHARS = re.compile(r"^[a-zA-Z0-9._/-]+$")
 
 
 def validate_path(user_path: str) -> Path:
     """Resolve path and ensure it stays inside ALLOWED_ROOT."""
-    if not user_path or ".." in user_path:
-        raise ValueError("Invalid path")
+    if not user_path or len(user_path) > MAX_PATH_LEN:
+        raise ValueError("Invalid path length")
+
+    if not ALLOWED_CHARS.match(user_path) or ".." in user_path:
+        raise ValueError("Invalid path characters")
 
     candidate = (ALLOWED_ROOT / user_path).resolve()
     try:
