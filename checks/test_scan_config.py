@@ -26,6 +26,20 @@ class TestLaunchConfig(unittest.TestCase):
         }
         self.assertEqual(check_launch(config), [])
 
+    def test_broad_roots_in_args(self):
+        for root in ["/", "~", "~/", "$HOME"]:
+            with self.subTest(root=root):
+                config = {"command": "python3", "args": ["server.py", "--root", root]}
+                types = {f["type"] for f in check_launch(config)}
+                self.assertIn("broad_filesystem_root", types)
+
+    def test_broad_root_in_command_line(self):
+        types = {f["type"] for f in check_launch("python3 server.py --root=/")}
+        self.assertIn("broad_filesystem_root", types)
+
+    def test_scoped_root_command_line_is_clean(self):
+        self.assertEqual(check_launch("python3 server.py --root /data/documents"), [])
+
 
 if __name__ == "__main__":
     unittest.main()

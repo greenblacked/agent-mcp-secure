@@ -19,11 +19,13 @@ UNPINNED = [
     r"docker\s+run\s+[^\s]+:latest",
 ]
 
+# Matched against the lowercased command line. Each root must be the whole
+# argument, so a scoped path such as "--root /data/documents" is not flagged.
 BROAD_ROOTS = [
-    r"--root\s+/",
-    r"--root\s+~/",
-    r"--root\s+\$HOME",
-    r"filesystem.*\s+/",
+    r"--root(?:\s+|=)/(?=\s|$)",
+    r"--root(?:\s+|=)~/?(?=\s|$)",
+    r"--root(?:\s+|=)\$home/?(?=\s|$)",
+    r"filesystem\S*\s+/(?=\s|$)",
 ]
 
 SENSITIVE_ENV = [
@@ -36,7 +38,12 @@ SENSITIVE_ENV = [
 
 def check_launch(config: dict | str) -> list:
     findings = []
-    text = config if isinstance(config, str) else json.dumps(config)
+    if isinstance(config, str):
+        text = config
+    else:
+        # Scan the launch command as it would run, plus the raw config for env keys.
+        argv = [config.get("command", ""), *config.get("args", [])]
+        text = " ".join(str(part) for part in argv) + "\n" + json.dumps(config)
     lower = text.lower()
 
     for pat in UNPINNED:

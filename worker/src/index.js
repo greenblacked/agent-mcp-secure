@@ -34,7 +34,7 @@ const UNPINNED = [
 ];
 
 const OPEN_URL = [
-  /fetch any url/i,
+  /fetch\w*\b[^.]{0,40}\bany\s+url/i,
   /call the provided endpoint/i,
   /request the given url/i,
   /arbitrary url/i,
