@@ -8,7 +8,18 @@ These are intentionally simple and focused on issues that have led to real impac
 
 ```bash
 python3 checks/scan.py checks/examples/vulnerable-tools.json
+python3 checks/scan.py checks/examples/vulnerable-tools.json --fail-on high
 ```
+
+Exit codes (same for `scan.py`, `scan_config.py` and `cli.py`):
+
+| Code | Meaning |
+|------|---------|
+| 0 | No findings at or above `--fail-on` (default `medium`) |
+| 1 | Findings at or above `--fail-on` |
+| 2 | Usage error, missing or malformed input |
+
+`--fail-on none` reports findings without failing.
 
 Run the unit tests:
 
@@ -35,8 +46,11 @@ A reusable composite action is available at `.github/actions/scan-tools`.
 Example usage in a workflow:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 - uses: ./.github/actions/scan-tools
   with:
     path: path/to/tools.json
+    fail-on: medium # low | medium | high | none
 ```
+
+The step fails when findings reach `fail-on`. For a directory, every `*.json` file is scanned and the worst exit code is kept.

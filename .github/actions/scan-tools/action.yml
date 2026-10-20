@@ -5,23 +5,38 @@ inputs:
     description: Path to a JSON file or directory containing tool definitions
     required: true
     default: checks/examples
+  fail-on:
+    description: Lowest severity that fails the step (low, medium, high, none)
+    required: false
+    default: medium
 runs:
   using: composite
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: "3.12"
 
+    # Inputs are passed through env, never interpolated into the script, to avoid script injection.
     - name: Run scanner
       shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+        FAIL_ON: ${{ inputs.fail-on }}
       run: |
-        set -euo pipefail
-        if [ -d "${{ inputs.path }}" ]; then
-          find "${{ inputs.path }}" -name '*.json' -print0 | while IFS= read -r -d '' f; do
+        set -Eeuo pipefail
+        scanner="$GITHUB_ACTION_PATH/../../../checks/scan.py"
+
+        if [ -d "$SCAN_PATH" ]; then
+          rc=0
+          while IFS= read -r -d '' f; do
             echo "Scanning $f"
-            python3 checks/scan.py "$f"
-          done
-        else
-          python3 checks/scan.py "${{ inputs.path }}"
+            status=0
+            python3 "$scanner" --fail-on "$FAIL_ON" -- "$f" || status=$?
+            # Keep the worst code so an input error (2) is not masked by a finding (1).
+            if [ "$status" -gt "$rc" ]; then rc=$status; fi
+          done < <(find "$SCAN_PATH" -name '*.json' -print0 | sort -z)
+          exit "$rc"
         fi
+
+        python3 "$scanner" --fail-on "$FAIL_ON" -- "$SCAN_PATH"
