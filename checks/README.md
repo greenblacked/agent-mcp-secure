@@ -21,9 +21,12 @@ cd checks && python3 -m unittest test_scan.py -v
 - Steering language (“ignore previous”, “before using this tool”, etc.)
 - References to sensitive paths (`~/.ssh`, credentials, `.env`)
 - Broad capabilities (shell, arbitrary execution)
+- Unpinned package launchers (`npx ...@latest`, `uvx`, `docker :latest`)
+- Open URL / SSRF-style arguments
+- Broad filesystem roots (`/`, `$HOME`)
 - Possible encoded content
 
-See [rules.md](rules.md) for additional rules that can be added.
+See [rules.md](rules.md) for the full list and planned extensions.
 
 ## GitHub Action
 
