@@ -28,9 +28,13 @@ Long base64-like strings in descriptions.
 ### Schema-level risky parameters
 Free-form string parameters named `url`, `endpoint`, `webhook`, `host`, `path`, `filepath` without an `enum` or `pattern` constraint.
 
+### Launch configuration scanning
+`checks/scan_config.py` flags:
+- Unpinned package launchers in MCP server commands
+- Broad filesystem roots in arguments (`--root /`, `$HOME`)
+- Sensitive environment variables present in config
+
 ## Planned
 
 - High ratio of non-ASCII or zero-width characters
 - Nested encoding
-- Configuration scanning for MCP launch arguments
-- Argument validation helpers in the hardened example
