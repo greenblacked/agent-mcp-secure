@@ -59,10 +59,10 @@ curl -X POST https://<worker>.workers.dev/check \
 On every push and pull request to `main`:
 
 - **Python lint**: ruff lint + format check (ruff pinned in `requirements-dev.txt`).
-- **Python tests**: unit tests, exit-code and output assertions on the vulnerable/safe/launch examples, a self-test of the `scan-tools` action, syntax check of the hardened server.
+- **Python tests** (3.10, 3.12, 3.14): unit tests, exit-code and output assertions on the vulnerable/safe/launch examples, a self-test of the `scan-tools` action, syntax check of the hardened server.
 - **Rust**: `cargo fmt --check`, `cargo clippy --locked -- -D warnings`, `cargo test --locked`, release build.
 
-Lint and tests run as separate jobs, and later check steps run even if an earlier one fails, so one run reports every problem. The workflow has read-only `contents` permission and pins third-party actions to commit SHAs.
+Lint and tests run as separate jobs, and later check steps run even if an earlier one fails, so one run reports every problem. The workflow has read-only `contents` permission and pins third-party actions to commit SHAs. Dependabot (`.github/dependabot.yml`) proposes weekly grouped updates for actions, Cargo and pip, holding new releases for 7 days.
 
 ## Threat model (summary)
 
