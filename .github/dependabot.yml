@@ -1,0 +1,49 @@
+version: 2
+
+# Weekly, grouped updates keep PR noise low. The cooldown delays brand-new
+# releases a few days so a compromised or broken publish is likely caught
+# upstream before it lands here. Security updates are not delayed by it.
+updates:
+  # Workflow actions and the composite action. Dependabot keeps the SHA pins
+  # and updates the trailing "# vX.Y.Z" comment.
+  - package-ecosystem: github-actions
+    directories:
+      - "/"
+      - "/.github/actions/scan-tools"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+      include: scope
+
+  - package-ecosystem: cargo
+    directory: "/rust"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      include: scope
+
+  # Dev tooling only (ruff).
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
