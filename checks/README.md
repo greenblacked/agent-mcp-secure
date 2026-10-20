@@ -11,7 +11,7 @@ python3 checks/scan.py checks/examples/vulnerable-tools.json
 python3 checks/scan.py checks/examples/vulnerable-tools.json --fail-on high
 ```
 
-Exit codes (same for `scan.py`, `scan_config.py` and `cli.py`):
+Exit codes (same for `scan.py`, `scan_config.py`, `cli.py` and the Rust CLI in `rust/`):
 
 | Code | Meaning |
 |------|---------|

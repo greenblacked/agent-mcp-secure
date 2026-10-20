@@ -163,3 +163,18 @@ jobs:
       - name: Build release
         if: ${{ !cancelled() }}
         run: cargo build --locked --release
+
+      - name: CLI exit codes match the Python scanner
+        if: ${{ !cancelled() }}
+        run: |
+          bin=target/release/agent-mcp-secure
+          expect() {
+            local want=$1; shift
+            local got=0
+            "$bin" "$@" >/dev/null || got=$?
+            [ "$got" -eq "$want" ] || { echo "Expected exit $want, got $got: $*"; exit 1; }
+          }
+          expect 1 ../checks/examples/vulnerable-tools.json
+          expect 0 --fail-on none ../checks/examples/vulnerable-tools.json
+          expect 0 ../checks/examples/safe-tools.json
+          expect 2 missing.json
