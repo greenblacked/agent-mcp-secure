@@ -43,6 +43,7 @@ Rust:
 ```bash
 cd rust
 cargo run -- ../checks/examples/vulnerable-tools.json
+cargo run -- --fail-on high ../checks/examples/vulnerable-tools.json
 cargo test
 ```
 
