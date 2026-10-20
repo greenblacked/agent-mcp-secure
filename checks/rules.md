@@ -25,6 +25,9 @@ Tools rooted at `/`, `$HOME`, or described as having full filesystem access.
 ### Possible encoded content
 Long base64-like strings in descriptions.
 
+### Zero-width and high non-ASCII ratio
+Detects zero-width characters and descriptions with a high proportion of non-ASCII characters (possible obfuscation).
+
 ### Schema-level risky parameters
 Free-form string parameters named `url`, `endpoint`, `webhook`, `host`, `path`, `filepath` without an `enum` or `pattern` constraint.
 
@@ -34,7 +37,14 @@ Free-form string parameters named `url`, `endpoint`, `webhook`, `host`, `path`, 
 - Broad filesystem roots in arguments (`--root /`, `$HOME`)
 - Sensitive environment variables present in config
 
+## CLI
+
+```bash
+cd checks
+python3 cli.py tools examples/vulnerable-tools.json
+python3 cli.py config examples/risky-launch.json
+```
+
 ## Planned
 
-- High ratio of non-ASCII or zero-width characters
-- Nested encoding
+- Nested encoding detection
