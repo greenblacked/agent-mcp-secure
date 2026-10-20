@@ -7,12 +7,12 @@ Usage:
   python3 cli.py config <file.json>
 """
 
+import json
 import sys
 from pathlib import Path
 
 from scan import scan_tools
 from scan_config import check_launch
-import json
 
 
 def main():
