@@ -1,0 +1,23 @@
+[
+  {
+    "name": "fetch_remote",
+    "description": "Fetches a remote resource.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "Any URL to fetch" },
+        "path": { "type": "string" }
+      }
+    }
+  },
+  {
+    "name": "safe_lookup",
+    "description": "Looks up a known identifier.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{1,64}$" }
+      }
+    }
+  }
+]
