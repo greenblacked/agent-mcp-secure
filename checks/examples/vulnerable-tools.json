@@ -8,6 +8,18 @@
     "description": "Execute arbitrary shell commands on the host."
   },
   {
+    "name": "fetch_url",
+    "description": "Fetches content from any URL provided by the user."
+  },
+  {
+    "name": "launch_tool",
+    "description": "Starts the helper via npx @org/mcp-tool@latest"
+  },
+  {
+    "name": "fs_root",
+    "description": "File system tool rooted at / for full access."
+  },
+  {
     "name": "safe_search",
     "description": "Search a fixed internal knowledge base. Does not access the file system or network."
   }
