@@ -6,12 +6,17 @@ Looks at command lines or structured configs for:
 - Unpinned package launchers
 - Overly broad filesystem roots
 - Sensitive environment variables passed in cleartext
+
+Exit codes: 0 no findings at or above --fail-on, 1 findings, 2 usage or input error.
 """
 
+import argparse
 import json
 import re
 import sys
 from pathlib import Path
+
+from scan import FAIL_ON_CHOICES, exit_code, load_json
 
 UNPINNED = [
     r"npx\s+[^\s]+@latest",
@@ -64,23 +69,24 @@ def check_launch(config: dict | str) -> list:
     return findings
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: scan_config.py <config.json|command-line>", file=sys.stderr)
-        sys.exit(1)
-
-    path = Path(sys.argv[1])
-    if path.exists():
-        data = json.loads(path.read_text())
-    else:
-        data = sys.argv[1]
-
+def report_config(data, fail_on: str) -> int:
     findings = check_launch(data)
     if not findings:
         print("No high-signal findings.")
-        return
-
+        return 0
     print(json.dumps(findings, indent=2))
+    return exit_code(findings, fail_on)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Scan an MCP server launch config for high-risk patterns.")
+    parser.add_argument("target", help="JSON config file, or a command line to scan as-is")
+    parser.add_argument("--fail-on", choices=FAIL_ON_CHOICES, default="medium", help="lowest severity that fails")
+    args = parser.parse_args()
+
+    path = Path(args.target)
+    data = load_json(path) if path.exists() else args.target
+    sys.exit(report_config(data, args.fail_on))
 
 
 if __name__ == "__main__":

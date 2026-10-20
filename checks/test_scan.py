@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from scan import check_description, check_schema, scan_tools
+from scan import check_description, check_schema, exit_code, scan_tools
 
 
 class TestCheckDescription(unittest.TestCase):
@@ -92,6 +92,22 @@ class TestScanTools(unittest.TestCase):
         tools = json.loads(path.read_text())
         results = scan_tools(tools)
         self.assertEqual(results, [])
+
+
+class TestExitCode(unittest.TestCase):
+    findings = [{"severity": "medium", "type": "x"}]
+
+    def test_default_threshold_fails_on_medium(self):
+        self.assertEqual(exit_code(self.findings, "medium"), 1)
+
+    def test_high_threshold_ignores_medium(self):
+        self.assertEqual(exit_code(self.findings, "high"), 0)
+
+    def test_none_never_fails(self):
+        self.assertEqual(exit_code([{"severity": "high"}], "none"), 0)
+
+    def test_no_findings(self):
+        self.assertEqual(exit_code([], "low"), 0)
 
 
 if __name__ == "__main__":
