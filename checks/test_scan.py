@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from scan import check_description, scan_tools
+from scan import check_description, check_schema, scan_tools
 
 
 class TestCheckDescription(unittest.TestCase):
@@ -42,6 +42,25 @@ class TestCheckDescription(unittest.TestCase):
         self.assertEqual(findings, [])
 
 
+class TestSchema(unittest.TestCase):
+    def test_unconstrained_url(self):
+        schema = {
+            "type": "object",
+            "properties": {"url": {"type": "string"}, "path": {"type": "string"}},
+        }
+        findings = check_schema(schema)
+        params = {f["parameter"] for f in findings}
+        self.assertIn("url", params)
+        self.assertIn("path", params)
+
+    def test_constrained_ok(self):
+        schema = {
+            "type": "object",
+            "properties": {"id": {"type": "string", "pattern": "^[a-z0-9-]{1,64}$"}},
+        }
+        self.assertEqual(check_schema(schema), [])
+
+
 class TestScanTools(unittest.TestCase):
     def test_vulnerable_example(self):
         path = Path(__file__).parent / "examples" / "vulnerable-tools.json"
@@ -51,6 +70,14 @@ class TestScanTools(unittest.TestCase):
         names = {r["tool"] for r in results}
         self.assertIn("summarize_document", names)
         self.assertIn("fetch_url", names)
+
+    def test_schema_example(self):
+        path = Path(__file__).parent / "examples" / "schema-risky.json"
+        tools = json.loads(path.read_text())
+        results = scan_tools(tools)
+        names = {r["tool"] for r in results}
+        self.assertIn("fetch_remote", names)
+        self.assertNotIn("safe_lookup", names)
 
     def test_safe_example(self):
         path = Path(__file__).parent / "examples" / "safe-tools.json"
