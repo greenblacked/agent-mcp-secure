@@ -102,7 +102,7 @@ Tool definitions (`checks/scan.py`):
 |---|---|---|:-:|:-:|:-:|
 | `steering_language` | high | "Before using this tool…", "ignore previous" | ✅ | ✅ | ✅ |
 | `sensitive_path_reference` | high | `~/.ssh`, `~/.aws`, `.env`, `id_rsa`, credentials | ✅ | ✅ | ✅ |
-| `open_url_argument` | high | "Fetches content from any URL" | ✅ | ✅ | ⚠️ ¹ |
+| `open_url_argument` | high | "Fetches content from any URL" | ✅ | ✅ | ✅ |
 | `broad_capability` | medium | "Execute arbitrary shell commands" | ✅ | ✅ | ✅ |
 | `unpinned_package` | medium | `npx tool@latest`, `uvx tool`, `docker run img:latest` | ✅ | ✅ | ✅ |
 | `broad_filesystem_root` | medium | "rooted at /", "access to the entire filesystem" | ✅ | ✅ | ✅ |
@@ -114,7 +114,7 @@ Tool definitions (`checks/scan.py`):
 Launch configs (`checks/scan_config.py`): `unpinned_launcher` (medium), `broad_filesystem_root` such as `--root /` or `$HOME` (high), and `sensitive_env_in_config` such as `AWS_SECRET_ACCESS_KEY` (high).
 
 **Python is the reference implementation.** Rust and the Worker cover a subset, and Python also matches a few extra patterns (`system prompt`, `secret`, `token`).
-¹ The Worker does not yet match "from any URL".
+The Worker additionally reports `description_too_long` (high) for descriptions over 10,000 characters, and rejects malformed requests with `400` instead of returning an empty result.
 Full rule descriptions are in [checks/rules.md](checks/rules.md).
 
 ## Defense in depth
@@ -152,7 +152,7 @@ These are high-signal heuristics, not a complete scanner. Treat a clean result a
 
 - Matching is pattern-based, so a determined author can rephrase around it. Pair the scanners with the [patterns](patterns/README.md) and [detections](detections/README.md).
 - Rust and the Worker cover only part of what Python detects (see the table above).
-- The Worker skips any tool whose description is longer than 10,000 characters, so that tool is reported as clean.
+- The Worker pattern-matches only the first 10,000 characters of a description; longer ones are always flagged `description_too_long`.
 - Launch-config scanning inspects the config itself (`command`, `args`, `env`), not the code the server runs.
 
 ## Development
@@ -162,9 +162,10 @@ pip install -r requirements-dev.txt                      # pinned ruff
 ruff check checks/ examples/ && ruff format --check checks/ examples/
 (cd checks && python3 -m unittest test_scan.py test_scan_config.py -v)
 (cd rust && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked)
+node --test worker/test/index.test.mjs                   # Node 22+
 ```
 
-CI runs on every push and pull request to `main`. Python lint and tests run as separate jobs, with tests on 3.10, 3.12 and 3.14. The Rust job runs fmt, clippy, tests, a release build, and CLI exit-code assertions, and the GitHub Action is self-tested. The workflow has read-only permissions, actions are pinned to commit SHAs, and Dependabot proposes weekly grouped updates with a 7-day cooldown.
+CI runs on every push and pull request to `main`. Python lint and tests run as separate jobs, with tests on 3.10, 3.12 and 3.14. The Rust job runs fmt, clippy, tests, a release build, and CLI exit-code assertions, the Worker job runs its tests on Node 22, and the GitHub Action is self-tested. The workflow has read-only permissions, actions are pinned to commit SHAs, and Dependabot proposes weekly grouped updates with a 7-day cooldown.
 
 ## Contributing
 
