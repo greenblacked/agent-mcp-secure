@@ -95,11 +95,12 @@ function scanTool(tool) {
   return findings;
 }
 
+/** One finding per rule type, however many of its patterns match. */
 function checkDescription(desc) {
   const findings = [];
   for (const rule of DESCRIPTION_RULES) {
-    for (const re of rule.patterns) {
-      if (re.test(desc)) findings.push({ severity: rule.severity, type: rule.type });
+    if (rule.patterns.some((re) => re.test(desc))) {
+      findings.push({ severity: rule.severity, type: rule.type });
     }
   }
   return findings;

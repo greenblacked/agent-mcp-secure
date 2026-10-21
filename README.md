@@ -24,9 +24,10 @@ $ python3 checks/scan.py checks/examples/vulnerable-tools.json   # output conden
   {
     "tool": "summarize_document",
     "findings": [
-      { "severity": "high", "type": "steering_language",        "pattern": "before using this tool" },
-      { "severity": "high", "type": "sensitive_path_reference", "pattern": "~/.ssh" },
-      { "severity": "high", "type": "sensitive_path_reference", "pattern": "id_rsa" }
+      { "severity": "high", "type": "steering_language", "pattern": "before using this tool",
+        "patterns": ["before using this tool"] },
+      { "severity": "high", "type": "sensitive_path_reference", "pattern": "~/.ssh",
+        "patterns": ["~/.ssh", "id_rsa"] }
     ]
   },
   ...
