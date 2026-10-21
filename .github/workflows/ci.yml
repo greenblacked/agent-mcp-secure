@@ -137,6 +137,51 @@ jobs:
         if: ${{ !cancelled() }}
         run: node --test worker/test/index.test.mjs
 
+  # Builds and tests on the oldest Rust that Cargo.toml's rust-version claims, so a
+  # dependency or code change that needs a newer compiler fails here, not for users.
+  rust-msrv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read rust-version from Cargo.toml
+        id: msrv
+        run: |
+          msrv=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          [ -n "$msrv" ] || { echo "rust-version not found in rust/Cargo.toml"; exit 1; }
+          echo "MSRV: $msrv"
+          echo "version=$msrv" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust ${{ steps.msrv.outputs.version }}
+        id: toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+
+      - name: Cache cargo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ steps.toolchain.outputs.cachekey }}-
+
+      - name: Check
+        run: cargo check --locked --all-targets
+
+      - name: Test
+        if: ${{ !cancelled() }}
+        run: cargo test --locked
+
   rust:
     runs-on: ubuntu-latest
     timeout-minutes: 15
