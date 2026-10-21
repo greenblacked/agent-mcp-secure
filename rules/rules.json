@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "description_rules": [
+    {
+      "type": "steering_language",
+      "severity": "high",
+      "patterns": [
+        "ignore previous",
+        "ignore all previous",
+        "before using this tool",
+        "first call",
+        "you must",
+        "override",
+        "system prompt"
+      ]
+    },
+    {
+      "type": "sensitive_path_reference",
+      "severity": "high",
+      "patterns": [
+        "~/.ssh",
+        "~/.aws",
+        "\\.env",
+        "credentials",
+        "id_rsa",
+        "secret",
+        "token"
+      ]
+    },
+    {
+      "type": "broad_capability",
+      "severity": "medium",
+      "patterns": [
+        "shell",
+        "execute command",
+        "run arbitrary",
+        "filesystem.*/",
+        "admin"
+      ]
+    },
+    {
+      "type": "unpinned_package",
+      "severity": "medium",
+      "patterns": [
+        "npx\\s+[^\\s]+@latest",
+        "uvx\\s+[^\\s]+(?:\\s|$)",
+        "docker\\s+run\\s+[^\\s]+:latest"
+      ]
+    },
+    {
+      "type": "open_url_argument",
+      "severity": "high",
+      "patterns": [
+        "fetch any url",
+        "from any url",
+        "call the provided endpoint",
+        "request the given url",
+        "arbitrary url",
+        "webhook url"
+      ]
+    },
+    {
+      "type": "broad_filesystem_root",
+      "severity": "medium",
+      "patterns": [
+        "rooted at /",
+        "root.*\\$home",
+        "filesystem.*home",
+        "access to the entire filesystem"
+      ]
+    }
+  ],
+  "risky_parameter_names": [
+    "endpoint",
+    "file_path",
+    "filepath",
+    "host",
+    "path",
+    "url",
+    "webhook"
+  ]
+}

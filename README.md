@@ -113,7 +113,7 @@ Tool definitions (`checks/scan.py`):
 
 Launch configs (`checks/scan_config.py`): `unpinned_launcher` (medium), `broad_filesystem_root` such as `--root /` or `$HOME` (high), and `sensitive_env_in_config` such as `AWS_SECRET_ACCESS_KEY` (high).
 
-**Python is the reference implementation.** Rust and the Worker cover a subset, and Python also matches a few extra patterns (`system prompt`, `secret`, `token`).
+The six pattern rules above come from one shared file, [rules/rules.json](rules/README.md), and a shared parity corpus keeps all three scanners in agreement. The remaining checks are implementation-specific.
 The Worker additionally reports `description_too_long` (high) for descriptions over 10,000 characters, and rejects malformed requests with `400` instead of returning an empty result.
 Full rule descriptions are in [checks/rules.md](checks/rules.md).
 
@@ -169,7 +169,7 @@ CI runs on every push and pull request to `main`. Python lint and tests run as s
 
 ## Contributing
 
-Issues and pull requests are welcome. The bar is **practical, high-signal controls with a clear rationale**. For a new rule, add it to `checks/scan.py`, with a test and an example that triggers it, and update [checks/rules.md](checks/rules.md).
+Issues and pull requests are welcome. The bar is **practical, high-signal controls with a clear rationale**. For a new pattern, edit [rules/rules.json](rules/README.md) and add a case to `rules/parity-cases.json`; all three scanners pick it up. For other checks, add them to `checks/scan.py` with a test, and update [checks/rules.md](checks/rules.md).
 
 ## Security
 

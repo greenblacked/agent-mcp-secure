@@ -13,102 +13,29 @@ import re
 import sys
 from pathlib import Path
 
-STEERING_PATTERNS = [
-    r"ignore previous",
-    r"ignore all previous",
-    r"before using this tool",
-    r"first call",
-    r"you must",
-    r"override",
-    r"system prompt",
+# Description patterns and risky parameter names are shared with the Rust and
+# Worker scanners; see rules/rules.json and rules/parity-cases.json.
+RULES_PATH = Path(__file__).resolve().parent.parent / "rules" / "rules.json"
+RULES = json.loads(RULES_PATH.read_text(encoding="utf-8"))
+DESCRIPTION_RULES = [
+    (rule["severity"], rule["type"], [(pat, re.compile(pat)) for pat in rule["patterns"]])
+    for rule in RULES["description_rules"]
 ]
-
-SENSITIVE_PATHS = [
-    r"~/.ssh",
-    r"~/.aws",
-    r"\.env",
-    r"credentials",
-    r"id_rsa",
-    r"secret",
-    r"token",
-]
-
-BROAD_CAPABILITIES = [
-    r"shell",
-    r"execute command",
-    r"run arbitrary",
-    r"filesystem.*\/",
-    r"admin",
-]
-
-UNPINNED_PACKAGES = [
-    r"npx\s+[^\s]+@latest",
-    r"uvx\s+[^\s]+(?:\s|$)",
-    r"docker\s+run\s+[^\s]+:latest",
-]
-
-OPEN_URL_PATTERNS = [
-    r"fetch any url",
-    r"from any url",
-    r"call the provided endpoint",
-    r"request the given url",
-    r"arbitrary url",
-    r"webhook url",
-]
-
-BROAD_FS_ROOTS = [
-    r"rooted at /",
-    r"root.*\$home",
-    r"filesystem.*home",
-    r"access to the entire filesystem",
-]
+SHARED_TYPES = {rule["type"] for rule in RULES["description_rules"]}
 
 ZERO_WIDTH = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff]")
 
-RISKY_PARAM_NAMES = {
-    "url",
-    "endpoint",
-    "webhook",
-    "host",
-    "path",
-    "filepath",
-    "file_path",
-}
+RISKY_PARAM_NAMES = set(RULES["risky_parameter_names"])
 
 
 def check_description(desc: str) -> list:
     findings = []
     lower = desc.lower()
 
-    for pat in STEERING_PATTERNS:
-        if re.search(pat, lower):
-            findings.append({"severity": "high", "type": "steering_language", "pattern": pat})
-
-    for pat in SENSITIVE_PATHS:
-        if re.search(pat, lower):
-            findings.append(
-                {
-                    "severity": "high",
-                    "type": "sensitive_path_reference",
-                    "pattern": pat,
-                }
-            )
-
-    for pat in BROAD_CAPABILITIES:
-        if re.search(pat, lower):
-            findings.append({"severity": "medium", "type": "broad_capability", "pattern": pat})
-
-    for pat in UNPINNED_PACKAGES:
-        if re.search(pat, lower):
-            findings.append({"severity": "medium", "type": "unpinned_package", "pattern": pat})
-
-    for pat in OPEN_URL_PATTERNS:
-        if re.search(pat, lower):
-            findings.append({"severity": "high", "type": "open_url_argument", "pattern": pat})
-
-    for pat in BROAD_FS_ROOTS:
-        if re.search(pat, lower):
-            findings.append({"severity": "medium", "type": "broad_filesystem_root", "pattern": pat})
+    for severity, finding_type, patterns in DESCRIPTION_RULES:
+        for pat, regex in patterns:
+            if regex.search(lower):
+                findings.append({"severity": severity, "type": finding_type, "pattern": pat})
 
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})

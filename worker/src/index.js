@@ -5,51 +5,18 @@
  * Body: { "tools": [ { "name": "...", "description": "...", "inputSchema": {...} } ] }
  */
 
-const STEERING = [
-  /ignore previous/i,
-  /before using this tool/i,
-  /first call/i,
-  /you must/i,
-  /override/i,
-];
+import rules from "../../rules/rules.json" with { type: "json" };
 
-const SENSITIVE = [
-  /~\/\.ssh/i,
-  /~\/\.aws/i,
-  /\.env/i,
-  /id_rsa/i,
-  /credentials/i,
-];
+// Description patterns and risky parameter names are shared with the Python and
+// Rust scanners; see rules/rules.json and rules/parity-cases.json. Wrangler
+// bundles the JSON into the Worker at deploy time.
+const DESCRIPTION_RULES = rules.description_rules.map((rule) => ({
+  severity: rule.severity,
+  type: rule.type,
+  patterns: rule.patterns.map((pat) => new RegExp(pat, "i")),
+}));
 
-const BROAD = [
-  /shell/i,
-  /execute command/i,
-  /run arbitrary/i,
-];
-
-const UNPINNED = [
-  /npx\s+[^\s]+@latest/i,
-  /uvx\s+[^\s]+/i,
-  /docker\s+run\s+[^\s]+:latest/i,
-];
-
-const OPEN_URL = [
-  /fetch any url/i,
-  /from any url/i,
-  /call the provided endpoint/i,
-  /request the given url/i,
-  /arbitrary url/i,
-  /webhook url/i,
-];
-
-const BROAD_FS = [
-  /rooted at \//i,
-  /root.*\$home/i,
-  /filesystem.*home/i,
-  /access to the entire filesystem/i,
-];
-
-const RISKY_PARAMS = new Set(["url", "endpoint", "webhook", "host", "path", "filepath", "file_path"]);
+const RISKY_PARAMS = new Set(rules.risky_parameter_names);
 
 const MAX_BODY_BYTES = 100_000;
 const MAX_TOOLS = 50;
@@ -130,23 +97,10 @@ function scanTool(tool) {
 
 function checkDescription(desc) {
   const findings = [];
-  for (const re of STEERING) {
-    if (re.test(desc)) findings.push({ severity: "high", type: "steering_language" });
-  }
-  for (const re of SENSITIVE) {
-    if (re.test(desc)) findings.push({ severity: "high", type: "sensitive_path_reference" });
-  }
-  for (const re of BROAD) {
-    if (re.test(desc)) findings.push({ severity: "medium", type: "broad_capability" });
-  }
-  for (const re of UNPINNED) {
-    if (re.test(desc)) findings.push({ severity: "medium", type: "unpinned_package" });
-  }
-  for (const re of OPEN_URL) {
-    if (re.test(desc)) findings.push({ severity: "high", type: "open_url_argument" });
-  }
-  for (const re of BROAD_FS) {
-    if (re.test(desc)) findings.push({ severity: "medium", type: "broad_filesystem_root" });
+  for (const rule of DESCRIPTION_RULES) {
+    for (const re of rule.patterns) {
+      if (re.test(desc)) findings.push({ severity: rule.severity, type: rule.type });
+    }
   }
   return findings;
 }

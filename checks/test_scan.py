@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from scan import check_description, check_schema, exit_code, scan_tools
+from scan import RULES, SHARED_TYPES, check_description, check_schema, exit_code, scan_tools
 
 
 class TestCheckDescription(unittest.TestCase):
@@ -108,6 +108,32 @@ class TestExitCode(unittest.TestCase):
 
     def test_no_findings(self):
         self.assertEqual(exit_code([], "low"), 0)
+
+
+class TestSharedRulesParity(unittest.TestCase):
+    """rules/parity-cases.json is run by the Python, Rust and Worker test suites alike."""
+
+    cases = json.loads((Path(__file__).resolve().parent.parent / "rules" / "parity-cases.json").read_text())["cases"]
+
+    def test_parity_cases(self):
+        for case in self.cases:
+            with self.subTest(description=case["description"]):
+                found = {f["type"] for f in check_description(case["description"])} & SHARED_TYPES
+                self.assertEqual(found, set(case["expect"]))
+
+    def test_every_rule_type_has_a_positive_case(self):
+        covered = {t for case in self.cases for t in case["expect"]}
+        self.assertEqual(covered, SHARED_TYPES)
+
+    def test_expectations_only_name_shared_types(self):
+        for case in self.cases:
+            self.assertLessEqual(set(case["expect"]), SHARED_TYPES, case["description"])
+
+    def test_rules_file_shape(self):
+        self.assertEqual(RULES["version"], 1)
+        for rule in RULES["description_rules"]:
+            self.assertIn(rule["severity"], {"low", "medium", "high"})
+            self.assertTrue(rule["patterns"], rule["type"])
 
 
 if __name__ == "__main__":
