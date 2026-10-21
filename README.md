@@ -165,7 +165,7 @@ ruff check checks/ examples/ && ruff format --check checks/ examples/
 node --test worker/test/index.test.mjs                   # Node 22+
 ```
 
-CI runs on every push and pull request to `main`. Python lint and tests run as separate jobs, with tests on 3.10, 3.12 and 3.14. The Rust job runs fmt, clippy, tests, a release build, and CLI exit-code assertions, the Worker job runs its tests on Node 22, and the GitHub Action is self-tested. The workflow has read-only permissions, actions are pinned to commit SHAs, and Dependabot proposes weekly grouped updates with a 7-day cooldown.
+CI runs on every push and pull request to `main`. Python lint and tests run as separate jobs, with tests on 3.10, 3.12 and 3.14. The Rust job runs fmt, clippy, tests, a release build, and CLI exit-code assertions, a separate job builds and tests on the minimum supported Rust version from `rust/Cargo.toml` (currently 1.80), the Worker job runs its tests on Node 22, and the GitHub Action is self-tested. The workflow has read-only permissions, actions are pinned to commit SHAs, and Dependabot proposes weekly grouped updates with a 7-day cooldown.
 
 ## Contributing
 
