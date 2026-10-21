@@ -16,7 +16,7 @@ import re
 import sys
 from pathlib import Path
 
-from scan import FAIL_ON_CHOICES, exit_code, load_json
+from scan import FAIL_ON_CHOICES, exit_code, load_json, pattern_finding
 
 UNPINNED = [
     r"npx\s+[^\s]+@latest",
@@ -39,6 +39,18 @@ SENSITIVE_ENV = [
 ]
 
 
+def _compiled(patterns: list) -> list:
+    return [(pat, re.compile(pat)) for pat in patterns]
+
+
+# (severity, finding type, patterns, matched against the command line or the raw config)
+LAUNCH_RULES = [
+    ("medium", "unpinned_launcher", _compiled(UNPINNED), "command"),
+    ("high", "broad_filesystem_root", _compiled(BROAD_ROOTS), "command"),
+    ("high", "sensitive_env_in_config", _compiled(SENSITIVE_ENV), "raw"),
+]
+
+
 def command_line(config: dict | str) -> str:
     """Flatten a launch config into a single command line."""
     if isinstance(config, str):
@@ -54,17 +66,10 @@ def check_launch(config: dict | str) -> list:
     text = config if isinstance(config, str) else json.dumps(config)
     lower = command_line(config).lower()
 
-    for pat in UNPINNED:
-        if re.search(pat, lower):
-            findings.append({"severity": "medium", "type": "unpinned_launcher", "pattern": pat})
-
-    for pat in BROAD_ROOTS:
-        if re.search(pat, lower):
-            findings.append({"severity": "high", "type": "broad_filesystem_root", "pattern": pat})
-
-    for pat in SENSITIVE_ENV:
-        if re.search(pat, text):
-            findings.append({"severity": "high", "type": "sensitive_env_in_config", "pattern": pat})
+    for severity, finding_type, patterns, target in LAUNCH_RULES:
+        finding = pattern_finding(severity, finding_type, patterns, lower if target == "command" else text)
+        if finding:
+            findings.append(finding)
 
     return findings
 

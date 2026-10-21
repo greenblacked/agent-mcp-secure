@@ -28,14 +28,25 @@ ZERO_WIDTH = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff]")
 RISKY_PARAM_NAMES = set(RULES["risky_parameter_names"])
 
 
+def pattern_finding(severity: str, finding_type: str, patterns: list, text: str) -> dict | None:
+    """One finding per rule type, however many of its patterns match.
+
+    "pattern" keeps the first match for existing consumers; "patterns" lists all of them.
+    """
+    matched = [pat for pat, regex in patterns if regex.search(text)]
+    if not matched:
+        return None
+    return {"severity": severity, "type": finding_type, "pattern": matched[0], "patterns": matched}
+
+
 def check_description(desc: str) -> list:
     findings = []
     lower = desc.lower()
 
     for severity, finding_type, patterns in DESCRIPTION_RULES:
-        for pat, regex in patterns:
-            if regex.search(lower):
-                findings.append({"severity": severity, "type": finding_type, "pattern": pat})
+        finding = pattern_finding(severity, finding_type, patterns, lower)
+        if finding:
+            findings.append(finding)
 
     if re.search(r"[A-Za-z0-9+/]{40,}={0,2}", desc):
         findings.append({"severity": "medium", "type": "possible_encoded_content"})

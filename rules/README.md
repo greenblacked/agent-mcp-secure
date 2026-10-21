@@ -20,7 +20,7 @@
 }
 ```
 
-- Each pattern is a regular expression, matched **case-insensitively** anywhere in the tool description. A rule reports one finding per pattern that matches.
+- Each pattern is a regular expression, matched **case-insensitively** anywhere in the tool description. A rule reports at most one finding per tool, however many of its patterns match. Python lists every matched pattern in `patterns` and keeps the first in `pattern`; Rust and the Worker report the type only. Each `type` must appear once in the file.
 - Patterns must behave the same in Python `re`, Rust `regex` and JavaScript `RegExp`. Stick to the common subset: literals, `.`, `*`, `+`, `?`, `[...]`, `\s`, `(?:...)`, `$`. Lookarounds, backreferences and inline flags are not portable.
 - `risky_parameter_names` lists the string parameters that `unconstrained_risky_parameter` flags when they have no `enum` or `pattern`. Python and the Worker use it; Rust has no schema check.
 
