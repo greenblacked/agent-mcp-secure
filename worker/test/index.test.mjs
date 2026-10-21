@@ -2,6 +2,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import rules from "../../rules/rules.json" with { type: "json" };
+import corpus from "../../rules/parity-cases.json" with { type: "json" };
 import worker from "../src/index.js";
 
 async function check(body, { raw = false, headers = {} } = {}) {
@@ -125,4 +127,28 @@ test("too many tools is rejected", async () => {
   const tools = Array.from({ length: 51 }, (_, i) => ({ name: `t${i}`, description: "ok" }));
   const { status } = await check({ tools });
   assert.equal(status, 400);
+});
+
+// Same corpus as the Python and Rust test suites.
+const SHARED_TYPES = new Set(rules.description_rules.map((r) => r.type));
+
+test("parity corpus matches the shared expectations", async () => {
+  // Sent in batches: the Worker accepts at most 50 tools per request.
+  const byTool = new Map();
+  for (let start = 0; start < corpus.cases.length; start += 50) {
+    const tools = corpus.cases
+      .slice(start, start + 50)
+      .map((c, j) => ({ name: `case${start + j}`, description: c.description }));
+    const { status, json } = await check({ tools });
+    assert.equal(status, 200);
+    for (const r of json.results) byTool.set(r.tool, r.findings);
+  }
+  const failures = [];
+  corpus.cases.forEach((c, i) => {
+    const found = new Set((byTool.get(`case${i}`) || []).map((f) => f.type).filter((t) => SHARED_TYPES.has(t)));
+    const expect = new Set(c.expect);
+    const same = found.size === expect.size && [...expect].every((t) => found.has(t));
+    if (!same) failures.push(`${JSON.stringify(c.description)}: expected [${[...expect]}], found [${[...found]}]`);
+  });
+  assert.deepEqual(failures, []);
 });

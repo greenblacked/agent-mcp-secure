@@ -21,83 +21,47 @@ pub struct ToolResult {
     pub findings: Vec<Finding>,
 }
 
-/// Built-in rules as (severity, finding type, patterns), in reporting order.
-/// Keep in sync with the pattern lists in `checks/scan.py`.
-const RULE_TABLE: &[(&str, &str, &[&str])] = &[
-    (
-        "high",
-        "steering_language",
-        &[
-            r"ignore previous",
-            r"before using this tool",
-            r"first call",
-            r"you must",
-            r"override",
-        ],
-    ),
-    (
-        "high",
-        "sensitive_path_reference",
-        &[r"~/.ssh", r"~/.aws", r"\.env", r"id_rsa", r"credentials"],
-    ),
-    (
-        "medium",
-        "broad_capability",
-        &[r"shell", r"execute command", r"run arbitrary"],
-    ),
-    (
-        "medium",
-        "unpinned_package",
-        &[
-            r"npx\s+[^\s]+@latest",
-            r"uvx\s+[^\s]+",
-            r"docker\s+run\s+[^\s]+:latest",
-        ],
-    ),
-    (
-        "high",
-        "open_url_argument",
-        &[
-            r"fetch any url",
-            r"from any url",
-            r"call the provided endpoint",
-            r"request the given url",
-            r"arbitrary url",
-            r"webhook url",
-        ],
-    ),
-    (
-        "medium",
-        "broad_filesystem_root",
-        &[
-            r"rooted at /",
-            r"root.*\$home",
-            r"filesystem.*home",
-            r"access to the entire filesystem",
-        ],
-    ),
-];
+/// Rules shared with the Python and Worker scanners, embedded at compile time.
+/// See `rules/rules.json` and `rules/parity-cases.json`.
+const RULES_JSON: &str = include_str!("../../rules/rules.json");
+
+#[derive(Deserialize)]
+struct RulesFile {
+    description_rules: Vec<DescriptionRule>,
+}
+
+#[derive(Deserialize)]
+struct DescriptionRule {
+    #[serde(rename = "type")]
+    type_: String,
+    severity: String,
+    patterns: Vec<String>,
+}
 
 struct Rule {
-    severity: &'static str,
-    type_: &'static str,
+    severity: String,
+    type_: String,
     regex: Regex,
 }
 
-/// Compiled once on first use instead of on every call.
-static RULES: LazyLock<Vec<Rule>> = LazyLock::new(|| {
-    RULE_TABLE
-        .iter()
-        .flat_map(|&(severity, type_, patterns)| {
-            patterns.iter().map(move |pat| Rule {
-                severity,
-                type_,
+fn load_rules(json: &str) -> Vec<Rule> {
+    let file: RulesFile =
+        serde_json::from_str(json).unwrap_or_else(|e| panic!("invalid rules/rules.json: {e}"));
+    file.description_rules
+        .into_iter()
+        .flat_map(|rule| {
+            rule.patterns.into_iter().map(move |pat| Rule {
+                severity: rule.severity.clone(),
+                type_: rule.type_.clone(),
                 regex: Regex::new(&format!(r"(?i){pat}"))
-                    .unwrap_or_else(|e| panic!("invalid built-in pattern {pat:?}: {e}")),
+                    .unwrap_or_else(|e| panic!("invalid pattern {pat:?} in rules/rules.json: {e}")),
             })
         })
         .collect()
-});
+}
+
+/// Compiled once on first use instead of on every call.
+static RULES: LazyLock<Vec<Rule>> = LazyLock::new(|| load_rules(RULES_JSON));
 
 pub fn check_description(desc: &str) -> Vec<Finding> {
     let lower = desc.to_lowercase();
@@ -105,8 +69,8 @@ pub fn check_description(desc: &str) -> Vec<Finding> {
         .iter()
         .filter(|rule| rule.regex.is_match(&lower))
         .map(|rule| Finding {
-            severity: rule.severity.into(),
-            type_: rule.type_.into(),
+            severity: rule.severity.clone(),
+            type_: rule.type_.clone(),
         })
         .collect()
 }
@@ -183,8 +147,44 @@ mod tests {
 
     #[test]
     fn all_rules_compile() {
-        let expected: usize = RULE_TABLE.iter().map(|(_, _, pats)| pats.len()).sum();
+        let file: serde_json::Value = serde_json::from_str(RULES_JSON).unwrap();
+        let expected: usize = file["description_rules"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["patterns"].as_array().unwrap().len())
+            .sum();
         assert_eq!(RULES.len(), expected);
+    }
+
+    /// Same corpus as the Python and Worker test suites.
+    #[test]
+    fn parity_cases() {
+        use std::collections::BTreeSet;
+        let corpus: serde_json::Value =
+            serde_json::from_str(include_str!("../../rules/parity-cases.json")).unwrap();
+        let mut failures = Vec::new();
+        for case in corpus["cases"].as_array().unwrap() {
+            let desc = case["description"].as_str().unwrap();
+            let expect: BTreeSet<String> = case["expect"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|t| t.as_str().unwrap().to_owned())
+                .collect();
+            let found: BTreeSet<String> = check_description(desc)
+                .into_iter()
+                .map(|f| f.type_)
+                .collect();
+            if found != expect {
+                failures.push(format!("{desc:?}: expected {expect:?}, found {found:?}"));
+            }
+        }
+        assert!(
+            failures.is_empty(),
+            "parity failures:\n{}",
+            failures.join("\n")
+        );
     }
 
     #[test]
